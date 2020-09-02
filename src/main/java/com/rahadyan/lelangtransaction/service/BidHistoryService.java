@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BidHistoryService {
@@ -17,21 +18,28 @@ public class BidHistoryService {
 
     public List<BidHistory> findAll() {
         List<BidHistory> bidHistories = new ArrayList<>();
-        this.bidHistoryRepository.findAll().forEach(auctionItem -> bidHistories.add(auctionItem));
+        bidHistoryRepository.findAll().forEach(auctionItem -> bidHistories.add(auctionItem));
         return bidHistories;
     }
 
     public BidHistory bidding(BiddingRequest biddingRequest) {
-        BidHistory bidHistory = BidHistory.builder()
-                .auctionItemId(biddingRequest.getAuctionItemId())
-                .userId(biddingRequest.getUserId())
-                .amount(biddingRequest.getAmount())
-                .bidTime(LocalDateTime.now())
-                .build();
-        return bidHistoryRepository.save(bidHistory);
+        Optional<BidHistory> bidHistoryOptional = bidHistoryRepository.findFirstByAuctionItemIdOrderByAmountDesc(biddingRequest.getAuctionItemId());
+        BidHistory bidHistory = null;
+        if(biddingRequest.getAmount() <= bidHistoryOptional.get().getAmount()) {
+            bidHistory = null;
+        } else {
+            bidHistory = BidHistory.builder()
+                    .auctionItemId(biddingRequest.getAuctionItemId())
+                    .userId(biddingRequest.getUserId())
+                    .amount(biddingRequest.getAmount())
+                    .bidTime(LocalDateTime.now())
+                    .build();
+            bidHistory = bidHistoryRepository.save(bidHistory);
+        }
+        return bidHistory;
     }
 
     public BidHistory findByAuctionItem(String auctionItemId ) throws Exception {
-        return this.bidHistoryRepository.findFirstByAuctionItemIdOrderByAmountDesc(auctionItemId).orElseThrow(() -> new Exception("User not found"));
+        return bidHistoryRepository.findFirstByAuctionItemIdOrderByAmountDesc(auctionItemId).orElseThrow(() -> new Exception("User not found"));
     }
 }

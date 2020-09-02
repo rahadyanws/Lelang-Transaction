@@ -27,6 +27,7 @@ public class TransactionController {
     private static final String READ_MAX_AMOUNT_FAILED = "Read Max Amount Failed!";
     private static final String ADD_BIDDING_SUCCESS = "Bidding Item Success!";
     private static final String ADD_BIDDING_FAILED = "Bidding Item Failed!";
+    private static final String BIDDING_NEED_MORE = "Amount Bidding Lower Than Current!";
     private static final String ADD_TRANSACTION_SUCCESS = "Transaction Item Success!";
     private static final String ADD_TRANSACTION_FAILED = "Transaction Item Failed!";
 
@@ -58,7 +59,7 @@ public class TransactionController {
     public ResponseEntity<ResponseWrapper> browse() {
         ResponseWrapper responseMessage = null;
         List<String> errors = new ArrayList<>();
-        try{
+        try {
             List<BidHistory> bidHistories = bidHistoryService.findAll();
             responseMessage = new ResponseWrapper(BROWSE_BIDDING_SUCCESS, bidHistories, 200, errors);
         } catch (Exception e) {
@@ -77,7 +78,11 @@ public class TransactionController {
         List<String> errors = new ArrayList<>();
         try {
             bidHistory = bidHistoryService.bidding(biddingRequest);
-            responseMessage = new ResponseWrapper(ADD_BIDDING_SUCCESS, bidHistory, 200, errors);
+            if (bidHistory != null) {
+                responseMessage = new ResponseWrapper(ADD_BIDDING_SUCCESS, bidHistory, 200, errors);
+            } else {
+                responseMessage = new ResponseWrapper(BIDDING_NEED_MORE, bidHistory, 200, errors);
+            }
         } catch (Exception e) {
             errors.add(e.getMessage());
             responseMessage = new ResponseWrapper(ADD_BIDDING_FAILED, bidHistory, 500, errors);
